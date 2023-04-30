@@ -1,76 +1,74 @@
 ---
-- name: Установка докера
+- name: Docker installation
   block:
-    - name: Установка universe
-      apt_repository:
-        repo: deb http://us.archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }} universe
-        state: present
-    - name: Установка дополнительных пакетов
+    - name: Installing additional packages
       apt:
         name:
           - ca-certificates
           - curl
           - gnupg
           - lsb-release
+          - apt-transport-https
           - python3-pip
         update-cache: yes
         update_cache_retries: 86400
 
-    - name: Добавление ключа Docker
+    - name: Adding a Docker Key
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
         keyring: /usr/share/keyrings/docker-archive-keyring.gpg
-    - name: Установка universe
+    - name: Install universe
+      when: ansible_distribution == 'Ubuntu'
       apt_repository:
         repo: >
           deb [arch=amd64  signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
-          https://download.docker.com/linux/ubuntu
+          https://download.docker.com/linux/{{ ansible_distribution }}
           {{ ansible_distribution_release }} stable
         state: present
         update-cache: yes
         filename: docker
 
-    - name: Установка Docker-ce
+    - name: Docker-ce installation
       apt:
         name: docker-ce
         update-cache: yes
 
-    - name: Проверка что Docker установлен и перезагружен
+    - name: Checking Docker is Installed and Reloaded
       service:
         name: docker
         state: restarted
         enabled: yes
-  become: yes
+  become: true
 - name: Docker-compose
   block:
-    - name: Получение последний версии docker-compose
+    - name: Getting the latest version of docker-compose
       uri:
         url: https://api.github.com/repos/docker/compose/releases/latest
         body_format: json
       register: compose_info_github
 
-    - name: Установка docker-compose
+    - name: Docker-compose installation
       get_url:
         url: "https://github.com/docker/compose/releases/download/{{ compose_info_github.json.tag_name }}/docker-compose-Linux-x86_64"
         dest: /usr/local/bin/docker-compose
         mode: 0755
-    - name: Допальнительные пакеты pip
+    - name: Additional pip packages
       block:
-        - name: Установка pip
+        - name: Install pip
           pip:
             name: docker
-  become: yes
-- name: Завершение установки
+  become: false
+- name: Completing the installation
   block:
-    - name: Создание группы docker
+    - name: Create a docker group
       group:
         name: docker
         state: present
 
-    - name: Добавление пользователя в группу docker
+    - name: Adding a user to the docker group
       user:
         name: "{{ ansible_user }}"
         groups: docker
         append: yes
-  become: yes
+  become: true

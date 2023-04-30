@@ -1,11 +1,11 @@
 ---
-- name: Установка OpenVpn
+- name: Install OpenVpn
   block:
-    - name: Клонирования OpenVpn
+    - name: Clone OpenVpn
       ansible.builtin.git:
         repo: https://github.com/ilflask/dockvpn.git
         dest: /open_vpn
-    - name: Запуск контейнера
+    - name: Running a container
       docker_container:
         name: open_vpn
         image: umputun/dockvpn
@@ -16,7 +16,7 @@
           - "443:443/tcp"
           - "1194:1194/udp"
       register: container
-    - name: Запуск контейнера 2
+    - name: Running a container 2
       docker_container:
         name: open_vpn2
         image: umputun/dockvpn
@@ -24,7 +24,7 @@
         command: serveconfig
         ports:
           - "8080:8080"
-    - name: Копирования конфига на локальную машину
+    - name: Copying the config to the local machine
       fetch:
         src: /open_vpn/container/client.ovpn
         dest: ./config
